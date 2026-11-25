@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Jom Order - Skrin Tempahan Layan Diri</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="kiosk-app">
+    <!-- Header Utama Kiosk -->
+    <header class="kiosk-header">
+      <div class="brand-wrapper">
+        <div class="brand-logo-icon">🍲</div>
+        <div class="brand-info">
+          <h1 id="storeNameText">Jom Order</h1>
+          <p id="storeTagline">Kiosk Tempahan Makanan Layan Diri</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div id="storeStatusBadge" class="store-status-badge status-open">
+          <span class="pulse-dot"></span>
+          <span id="storeStatusLabel">Dibuka</span>
+        </div>
+        <a href="admin.html" class="btn-admin-link" title="Panel Pengurusan Kedai">
+          ⚙️ <span>Staf / CMS</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Banner Pengumuman Kedai -->
+    <div id="announcementBanner" class="announcement-banner">
+      <span>📢</span>
+      <span id="bannerText">Selamat Datang! Pilih hidangan kegemaran anda.</span>
+    </div>
+
+    <!-- Bahagian Utama Kiosk: Menu + Troli -->
+    <main class="kiosk-body">
+      <!-- Seksyen Kiri: Kategori & Senarai Menu -->
+      <section class="menu-section">
+        <!-- Bar Kategori Pilihan -->
+        <nav class="category-bar-wrapper" id="categoryBar">
+          <button class="cat-btn active" data-cat-id="all">
+            <span>✨</span> Semua Menu
+          </button>
+          <!-- Kategori dinamik akan dimasukkan melalui JavaScript -->
+        </nav>
+
+        <!-- Grid Menu Makanan -->
+        <div class="menu-grid-wrapper">
+          <div class="menu-grid" id="menuGrid">
+            <!-- Kad menu akan dimasukkan melalui JavaScript -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Seksyen Kanan: Panel Troli & Bayaran/Hantar -->
+      <aside class="cart-section">
+        <div class="cart-header">
+          <h2>
+            🛒 Troli Pesanan
+            <span class="cart-count-badge" id="cartBadgeCount">0</span>
+          </h2>
+          <button class="btn-clear-cart" id="btnClearCart" title="Kosongkan Troli">Kosongkan</button>
+        </div>
+
+        <!-- Pemilih Jenis Pesanan: Makan Sini atau Bungkus -->
+        <div class="order-type-picker">
+          <label>Pilihan Jamuan</label>
+          <div class="type-toggle-group">
+            <button type="button" class="type-option-btn active" id="btnDineIn" data-type="dine_in">
+              🍽️ Makan Sini
+            </button>
+            <button type="button" class="type-option-btn" id="btnTakeaway" data-type="takeaway">
+              🛍️ Bungkus
+            </button>
+          </div>
+        </div>
+
+        <!-- Senarai Item dalam Troli -->
+        <div class="cart-items-wrapper" id="cartItemsList">
+          <div class="cart-empty-state" id="cartEmptyPlaceholder">
+            <div class="cart-empty-icon">🍽️</div>
+            <p><strong>Troli anda masih kosong</strong></p>
+            <p style="font-size: 0.85rem; margin-top: 0.35rem;">Tekan menu di sebelah kiri untuk menambah ke troli.</p>
+          </div>
+        </div>
+
+        <!-- Bahagian Bawah Troli: Butiran & Butang Hantar -->
+        <div class="cart-footer">
+          <div class="cart-input-row" id="tableRow">
+            <input type="text" id="inputTableNo" class="cart-input" placeholder="Nombor Meja (cth: Meja 12)" maxlength="20">
+          </div>
+          <div class="cart-input-row">
+            <input type="text" id="inputCustName" class="cart-input" placeholder="Nama Pelanggan (pilihan)" maxlength="50">
+          </div>
+          <div class="cart-input-row">
+            <input type="text" id="inputNotes" class="cart-input" placeholder="Nota tambahan (cth: Kurang manis, tanpa taugeh)" maxlength="200">
+          </div>
+
+          <div class="cart-summary-line">
+            <span>Jumlah Item:</span>
+            <span id="summaryTotalQty">0</span>
+          </div>
+          <div class="cart-summary-total">
+            <span>Jumlah Bayaran:</span>
+            <span class="amount" id="summaryTotalPrice">RM 0.00</span>
+          </div>
+
+          <button type="button" id="btnSubmitOrder" class="btn-checkout" disabled>
+            <span>✅ Hantar Pesanan</span>
+          </button>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Modal Status & Nombor Giliran Pesanan Berjaya -->
+    <div class="modal-overlay" id="orderSuccessModal">
+      <div class="modal-content order-success-card">
+        <div class="success-badge-icon">🎉</div>
+        <h2>Pesanan Berjaya Dihantar!</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem;">
+          Sila simpan nombor giliran anda untuk rujukan dapur.
+        </p>
+
+        <!-- Paparan Nombor Giliran Berjujukan -->
+        <div class="queue-display">
+          <div class="queue-label">Nombor Giliran Anda</div>
+          <div class="queue-number-huge" id="modalQueueNumber">A-001</div>
+          <div id="modalOrderTypeLabel" style="font-weight: 700; color: #7c2d12;">Makan Sini</div>
+        </div>
+
+        <!-- Status Pesanan Langsung (Live Tracking) -->
+        <div style="margin: 1rem 0;">
+          <p style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">
+            Status Pesanan Langsung:
+          </p>
+          <div id="modalLiveStatusBadge" class="order-live-status-pill status-new">
+            <span class="pulse-dot"></span>
+            <span id="modalLiveStatusText">Baru Diterima</span>
+          </div>
+          <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.4rem;">
+            (Status dikemaskini secara automatik dari dapur setiap 4 saat)
+          </p>
+        </div>
+
+        <!-- Ringkasan Item Pesanan -->
+        <div id="modalOrderItemsSummary" style="text-align: left; background: #f8fafc; border-radius: 8px; padding: 0.75rem; font-size: 0.85rem; max-height: 150px; overflow-y: auto; margin-bottom: 1rem;">
+          <!-- Item ringkas dimasukkan oleh JS -->
+        </div>
+
+        <button type="button" id="btnNewOrder" class="btn-checkout" style="padding: 0.8rem;">
+          ➕ Buat Pesanan Baharu
+        </button>
+      </div>
+    </div>
+
+    <!-- Bekas Notifikasi Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script src="kiosk.js"></script>
+</body>
+</html>

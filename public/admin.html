@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jom Order - Panel Pengurusan Admin & Dapur</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Styling khusus Admin */
+    .login-wrapper {
+      max-width: 420px;
+      margin: 8vh auto;
+      padding: 2rem;
+      background: white;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-xl);
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .badge-status {
+      display: inline-block;
+      padding: 0.25rem 0.65rem;
+      border-radius: var(--radius-full);
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-new { background: #fef3c7; color: #b45309; }
+    .badge-preparing { background: #e0f2fe; color: #0369a1; }
+    .badge-ready { background: #dcfce7; color: #15803d; }
+    .badge-completed { background: #f1f5f9; color: #475569; }
+    .badge-cancelled { background: #fee2e2; color: #b91c1c; }
+    .action-btn-sm {
+      padding: 0.35rem 0.65rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: white;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      transition: all 0.15s;
+    }
+    .action-btn-sm:hover {
+      background: #f1f5f9;
+    }
+    .action-btn-danger:hover {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #fca5a5;
+    }
+    .img-preview-box {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--radius-sm);
+      border: 2px dashed #cbd5e1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background: #f8fafc;
+      margin-top: 0.5rem;
+      position: relative;
+    }
+    .img-preview-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body class="admin-app">
+
+  <!-- Skrin Log Masuk Admin -->
+  <div id="loginScreen" class="login-wrapper">
+    <div style="font-size: 3rem; margin-bottom: 0.5rem;">🔐</div>
+    <h2 style="font-size: 1.5rem; font-weight: 800; color: #0f172a;">Panel Admin Jom Order</h2>
+    <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">
+      Sila masukkan kata laluan keselamatan untuk mengakses panel dapur & menu.
+    </p>
+
+    <!-- Kotak Ralat 503 / 401 -->
+    <div id="loginAlertBox" style="display: none; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; text-align: left;"></div>
+
+    <form id="loginForm">
+      <div class="form-group" style="text-align: left;">
+        <label for="adminPasswordInput">Kata Laluan Admin (ADMIN_PASSWORD):</label>
+        <input type="password" id="adminPasswordInput" class="form-control" placeholder="Masukkan kata laluan..." required>
+      </div>
+      <button type="submit" id="btnLoginSubmit" class="btn-checkout" style="padding: 0.75rem; font-size: 1rem;">
+        Log Masuk CMS
+      </button>
+    </form>
+    <div style="margin-top: 1.25rem;">
+      <a href="/" style="font-size: 0.85rem; color: #64748b; text-decoration: none;">← Kembali ke Skrin Kiosk</a>
+    </div>
+  </div>
+
+  <!-- Panel Kawalan Utama Admin (Muncul selepas log masuk berjaya) -->
+  <div id="adminMainContent" style="display: none; flex: 1; flex-direction: column;">
+    <!-- Bar Navigasi Admin -->
+    <nav class="admin-nav">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <div style="font-size: 1.5rem;">👨‍🍳</div>
+        <div>
+          <strong id="adminNavStoreTitle" style="font-size: 1.1rem; color: white;">Jom Order CMS</strong>
+          <span style="font-size: 0.75rem; color: #94a3b8; display: block;">Panel Pengurusan & Dapur</span>
+        </div>
+      </div>
+
+      <!-- Tab Navigasi -->
+      <div class="admin-nav-tabs">
+        <button type="button" class="admin-tab-btn active" data-tab="tab-orders">
+          🍳 <span>Pesanan Dapur</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="tab-menu">
+          📋 <span>Menu Makanan</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="tab-categories">
+          📁 <span>Kategori</span>
+        </button>
+        <button type="button" class="admin-tab-btn" data-tab="tab-settings">
+          ⚙️ <span>Tetapan Kedai</span>
+        </button>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <a href="/" target="_blank" class="action-btn-sm" style="color: #334155;">
+          🖥️ Buka Kiosk
+        </a>
+        <button type="button" id="btnLogout" class="action-btn-sm action-btn-danger">
+          🚪 Keluar
+        </button>
+      </div>
+    </nav>
+
+    <!-- Kandungan Tab -->
+    <main class="admin-container">
+
+      <!-- TAB 1: PESANAN DAPUR (KITCHEN LIVE BOARD) -->
+      <section id="tab-orders" class="tab-panel active">
+        <div class="admin-header-row">
+          <div>
+            <h2 style="font-size: 1.4rem; font-weight: 800;">Pesanan Dapur Masa Nyata</h2>
+            <p style="color: #64748b; font-size: 0.85rem;">Pantau dan kemaskini status penyediaan makanan.</p>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <!-- Penapis Status -->
+            <select id="orderStatusFilter" class="form-control" style="width: auto; padding: 0.4rem 0.8rem;">
+              <option value="all">Semua Status</option>
+              <option value="new">Baru Masuk</option>
+              <option value="preparing">Sedang Disediakan</option>
+              <option value="ready">Sedia Diambil</option>
+              <option value="completed">Selesai</option>
+              <option value="cancelled">Dibatalkan</option>
+            </select>
+            <button type="button" id="btnRefreshOrders" class="action-btn-sm" style="padding: 0.5rem 0.85rem;">
+              🔄 Muat Semula
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid Kad Pesanan Dapur -->
+        <div id="kitchenOrdersGrid" class="kitchen-orders-grid">
+          <!-- Kad pesanan akan dimasukkan dinamik -->
+        </div>
+      </section>
+
+      <!-- TAB 2: PENGURUSAN MENU -->
+      <section id="tab-menu" class="tab-panel">
+        <div class="admin-card">
+          <div class="admin-header-row">
+            <div>
+              <h2 style="font-size: 1.4rem; font-weight: 800;">Katalog Menu Makanan</h2>
+              <p style="color: #64748b; font-size: 0.85rem;">Tambah, edit, tukar harga cepat dan aktifkan menu.</p>
+            </div>
+            <button type="button" id="btnOpenAddItemModal" class="btn-checkout" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+              ➕ Tambah Menu Baharu
+            </button>
+          </div>
+
+          <!-- Carian & Tapis Menu -->
+          <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+            <input type="text" id="menuSearchInput" class="form-control" placeholder="Cari nama menu..." style="max-width: 300px;">
+            <select id="menuCategoryFilter" class="form-control" style="max-width: 200px;">
+              <option value="all">Semua Kategori</option>
+            </select>
+          </div>
+
+          <!-- Jadual Menu -->
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">Foto</th>
+                  <th>Nama Menu & Keterangan</th>
+                  <th>Kategori</th>
+                  <th style="width: 140px;">Harga (RM) [Tukar Cepat]</th>
+                  <th style="width: 90px; text-align: center;">Status</th>
+                  <th style="width: 180px; text-align: right;">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="menuTableBody">
+                <!-- Baris Menu Dinamik -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: PENGURUSAN KATEGORI -->
+      <section id="tab-categories" class="tab-panel">
+        <div class="admin-card">
+          <div class="admin-header-row">
+            <div>
+              <h2 style="font-size: 1.4rem; font-weight: 800;">Pengurusan Kategori</h2>
+              <p style="color: #64748b; font-size: 0.85rem;">Susun kategori untuk paparan pada skrin kiosk.</p>
+            </div>
+            <button type="button" id="btnOpenAddCategoryModal" class="btn-checkout" style="width: auto; padding: 0.6rem 1.2rem; font-size: 0.9rem;">
+              ➕ Tambah Kategori
+            </button>
+          </div>
+
+          <!-- Jadual Kategori -->
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Ikon</th>
+                  <th>Nama Kategori</th>
+                  <th style="width: 100px;">Susunan</th>
+                  <th style="width: 100px; text-align: center;">Status</th>
+                  <th style="width: 160px; text-align: right;">Tindakan</th>
+                </tr>
+              </thead>
+              <tbody id="categoryTableBody">
+                <!-- Baris Kategori Dinamik -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: TETAPAN KEDAI -->
+      <section id="tab-settings" class="tab-panel">
+        <div class="admin-card" style="max-width: 700px;">
+          <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.25rem;">Tetapan Kedai & Operasi</h2>
+          <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">
+            Konfigurasi nama kedai, pengumuman dan status buka/tutup pesanan.
+          </p>
+
+          <form id="storeSettingsForm">
+            <!-- Suis Status Operasi Kedai -->
+            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 1.25rem; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <strong style="display: block; font-size: 1rem;">Status Operasi Kedai</strong>
+                <span id="storeOpenLabelText" style="font-size: 0.85rem; color: #64748b;">
+                  Kedai dibuka untuk menerima pesanan dari skrin kiosk.
+                </span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="settingStoreOpen">
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <!-- Nama Kedai -->
+            <div class="form-group">
+              <label for="settingStoreName">Nama Kedai / Restoran:</label>
+              <input type="text" id="settingStoreName" class="form-control" placeholder="Cth: Jom Order Kopitiam" required>
+            </div>
+
+            <!-- Banner Pengumuman -->
+            <div class="form-group">
+              <label for="settingStoreBanner">Mesej Banner Pengumuman Kiosk:</label>
+              <textarea id="settingStoreBanner" class="form-control" rows="3" placeholder="Mesej sambutan atau promosi di bahagian atas kiosk..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-checkout" style="padding: 0.75rem 1.5rem; font-size: 1rem; width: auto;">
+              💾 Simpan Tetapan
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODAL: TAMBAH / EDIT ITEM MENU -->
+  <div class="modal-overlay" id="itemModal">
+    <div class="modal-content" style="max-width: 550px;">
+      <h3 id="itemModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem;">Tambah Menu Baharu</h3>
+      <form id="itemForm">
+        <input type="hidden" id="itemFormId">
+
+        <div class="form-group">
+          <label for="itemFormName">Nama Menu:*</label>
+          <input type="text" id="itemFormName" class="form-control" placeholder="Cth: Nasi Lemak Ayam Berempah" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label for="itemFormCategory">Kategori:*</label>
+            <select id="itemFormCategory" class="form-control" required></select>
+          </div>
+          <div class="form-group">
+            <label for="itemFormPrice">Harga (RM):*</label>
+            <input type="number" step="0.10" min="0" id="itemFormPrice" class="form-control" placeholder="Cth: 12.50" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="itemFormDesc">Keterangan / Bahan:</label>
+          <textarea id="itemFormDesc" class="form-control" rows="2" placeholder="Keterangan ringkas menu..."></textarea>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label for="itemFormEmoji">Emoji Fallback:</label>
+            <input type="text" id="itemFormEmoji" class="form-control" placeholder="Cth: 🍗" maxlength="4">
+          </div>
+          <div class="form-group">
+            <label for="itemFormSort">Susunan Nombor:</label>
+            <input type="number" id="itemFormSort" class="form-control" value="0">
+          </div>
+        </div>
+
+        <!-- Bahagian Muat Naik Gambar dengan Mampatan Sisi Client (Canvas < 95 KB) -->
+        <div class="form-group" style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 1rem;">
+          <label style="margin-bottom: 0.25rem;">Gambar Menu (Dimampatkan automatik &lt; 95 KB):</label>
+          <p style="font-size: 0.75rem; color: #64748b; margin-bottom: 0.5rem;">
+            Gambar akan dikecilkan kepada maksima 480px dengan latar belakang putih.
+          </p>
+          <input type="file" id="itemFormFileInput" accept="image/png, image/jpeg, image/webp" class="form-control" style="font-size: 0.8rem;">
+          <input type="hidden" id="itemFormImageId">
+
+          <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+            <div id="itemImgPreviewBox" class="img-preview-box">
+              <span id="itemImgPlaceholder" style="font-size: 2rem;">🖼️</span>
+              <img id="itemImgPreview" src="" alt="Pratonton" style="display: none;">
+            </div>
+            <div id="itemImgUploadStatus" style="font-size: 0.8rem; color: #64748b;">
+              Belum ada gambar baru dipilih.
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.6rem;">
+          <input type="checkbox" id="itemFormIsActive" checked style="width: 18px; height: 18px;">
+          <label for="itemFormIsActive" style="margin: 0; cursor: pointer;">Menu aktif untuk pesanan kiosk</label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="button" class="btn-secondary" id="btnCancelItemModal" style="width: auto; margin: 0;">Batal</button>
+          <button type="submit" id="btnSaveItem" class="btn-checkout" style="width: auto; padding: 0.65rem 1.5rem; font-size: 0.95rem;">
+            💾 Simpan Menu
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: TAMBAH / EDIT KATEGORI -->
+  <div class="modal-overlay" id="categoryModal">
+    <div class="modal-content" style="max-width: 450px;">
+      <h3 id="categoryModalTitle" style="font-size: 1.25rem; font-weight: 800; margin-bottom: 1rem;">Tambah Kategori</h3>
+      <form id="categoryForm">
+        <input type="hidden" id="categoryFormId">
+
+        <div class="form-group">
+          <label for="categoryFormName">Nama Kategori:*</label>
+          <input type="text" id="categoryFormName" class="form-control" placeholder="Cth: Makanan Utama" required>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+          <div class="form-group">
+            <label for="categoryFormIcon">Ikon Emoji:*</label>
+            <input type="text" id="categoryFormIcon" class="form-control" placeholder="Cth: 🍛" required maxlength="4">
+          </div>
+          <div class="form-group">
+            <label for="categoryFormSort">Susunan Nombor:</label>
+            <input type="number" id="categoryFormSort" class="form-control" value="0">
+          </div>
+        </div>
+
+        <div class="form-group" style="display: flex; align-items: center; gap: 0.6rem;">
+          <input type="checkbox" id="categoryFormIsActive" checked style="width: 18px; height: 18px;">
+          <label for="categoryFormIsActive" style="margin: 0; cursor: pointer;">Kategori aktif</label>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="button" class="btn-secondary" id="btnCancelCategoryModal" style="width: auto; margin: 0;">Batal</button>
+          <button type="submit" class="btn-checkout" style="width: auto; padding: 0.65rem 1.5rem; font-size: 0.95rem;">
+            💾 Simpan Kategori
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bekas Notifikasi Toast -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
